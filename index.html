@@ -49,6 +49,7 @@
   .auto { width: 100%; }
   .rolls { width: 100%; font-size: 12px; line-height: 1.7; word-break: break-all; min-height: 3.4em; }
   .rolls b { font-weight: 500; }
+  .note { color: #39ff14; font-weight: 500; }
 
   /* board */
   .right { display: flex; flex-direction: column; gap: 12px; }
@@ -89,7 +90,7 @@
 <div class="wrap">
   <header>
     <h1>Same Die, Two Rules</h1>
-    <p class="sub">Throw the die, then draw one step on each side by tapping the next grid point. Or let the machine do it with Auto throw. <b>A</b>: the roll is the direction. <b>B</b>: the roll is the turn. Only B remembers.</p>
+    <p class="sub">Throw the die, then draw one step on each side by tapping the next grid point. Or let the machine do it with Auto throw. <b>A</b>: the roll picks one of three directions. <b>B</b>: the roll picks one of three turns. Same die, same three options, same odds. Only B remembers.</p>
   </header>
 
   <div class="stage">
@@ -112,7 +113,7 @@
       <p class="hint">Click or flick the die, or press space.</p>
       <button class="throw" id="throw" type="button">Throw</button>
       <button class="ghost auto" id="auto" type="button" aria-pressed="false">Auto throw</button>
-      <div class="rolls"><b>Throws</b> <span id="n">0</span><br><span id="log"></span></div>
+      <div class="rolls"><b>Throws</b> <span id="n">0</span><br><span id="log"></span><br><span id="note" class="note"></span></div>
       <div class="side-controls">
         <button class="ghost" id="machine" type="button" aria-pressed="false">Show machine</button>
         <div class="pair">
@@ -126,13 +127,13 @@
       <div class="rules">
         <div class="rule"><strong>Rule A · Absolute</strong>roll → direction
           <div class="map"><span class="k">1</span><span class="k">2</span><span class="k">3</span><span class="k">4</span><span class="k">5</span><span class="k">6</span>
-          <span>up</span><span>up-right</span><span>down-right</span><span>down</span><span>down-left</span><span>up-left</span></div>
-          <p class="fine">Six faces, six grid directions, 60° apart. Each throw picks a direction from scratch. No memory.</p>
+          <span>up</span><span>up</span><span>down-right</span><span>down-right</span><span>down-left</span><span>down-left</span></div>
+          <p class="fine">Three directions, 120° apart, so the average is zero and A never drifts on purpose. Each throw picks a direction from scratch. The random number is the value. No memory.</p>
         </div>
-        <div class="rule"><strong>Rule B · Relative</strong>roll → turn from last direction
+        <div class="rule"><strong>Rule B · Relative</strong>roll → angle added to the last direction
           <div class="map"><span class="k">1</span><span class="k">2</span><span class="k">3</span><span class="k">4</span><span class="k">5</span><span class="k">6</span>
-          <span>left</span><span>left</span><span>straight</span><span>straight</span><span>right</span><span>right</span></div>
-          <p class="fine">Turn is fixed at one grid line, 60°, so A and B draw from the same six directions. B starts pointing up. Only how the direction is chosen differs.</p>
+          <span>−60°</span><span>−60°</span><span>0°</span><span>0°</span><span>+60°</span><span>+60°</span></div>
+          <p class="fine">Three angles: −60° is one grid line to the left, +60° one to the right. B starts pointing up. The random number is not a direction, it is an amount added to the last direction. That is the only difference from A.</p>
         </div>
       </div>
       <div class="board">
@@ -145,7 +146,7 @@
         <span class="stat">Machine distance from start · A <b id="dA">–</b> · B <b id="dB">–</b> steps</span>
       </div>
 
-      <p class="how"><b>By hand:</b> throw, then tap the next grid point on A and on B. Every tap snaps to the grid and joins your last point. <b>Auto throw:</b> the die keeps throwing and the machine draws both walkers itself. <b>Show machine:</b> overlays in green what the code draws from the same throws, starting where your line starts, so any step where your black line leaves the green one is a mistake made visible. <b>Clear</b> wipes the drawing and the throws. To keep a drawing, take a screenshot.</p>
+      <p class="how"><b>By hand:</b> begin at the marked start point on each side, throw, then tap the next grid point on A and on B. Same pairs of faces on both sides: 1–2, 3–4, 5–6. Every tap snaps to the grid and joins your last point. <b>Auto throw:</b> the die keeps throwing and the machine draws both walkers itself, and stops on its own the moment either line would leave the board. <b>Show machine:</b> overlays in green what the code draws from the same throws, starting where your line starts, so any step where your black line leaves the green one is a mistake made visible. <b>Clear</b> wipes the drawing and the throws. To keep a drawing, take a screenshot.</p>
 
     </section>
   </div>
@@ -156,7 +157,7 @@
   // ---------- die ----------
   const cube = document.getElementById('cube'), toss = document.getElementById('toss'), tray = document.getElementById('tray');
   const readout = document.getElementById('readout'), throwBtn = document.getElementById('throw');
-  const nEl = document.getElementById('n'), logEl = document.getElementById('log');
+  const nEl = document.getElementById('n'), logEl = document.getElementById('log'), noteEl = document.getElementById('note');
   const FACE_ROT = { 1:[0,0], 2:[-90,0], 3:[0,-90], 4:[0,90], 5:[90,0], 6:[0,180] };
   let spinX = -18, spinY = 24, busy = false, rolls = [];
   function showFace(v, animate) {
@@ -213,6 +214,7 @@
     return [i * h, j * s + off];
   }
   function sideOf(x) { return x < W / 2 ? 'A' : 'B'; }
+  const START = { A: snap(W / 4, H / 2), B: snap(3 * W / 4, H / 2) };
 
   // ---------- drawing state ----------
   const sides = { A: { strokes: [] }, B: { strokes: [] } };
@@ -221,19 +223,32 @@
   const dAEl = document.getElementById('dA'), dBEl = document.getElementById('dB');
 
   machineBtn.addEventListener('click', () => { showMachine = !showMachine; machineBtn.setAttribute('aria-pressed', showMachine); render(); });
+  function stopAuto() {
+    if (!autoTimer) return;
+    clearInterval(autoTimer); autoTimer = null; autoBtn.setAttribute('aria-pressed', 'false'); autoBtn.textContent = 'Auto throw';
+  }
   function quickThrow() {
     const v = 1 + Math.floor(Math.random() * 6);
-    showFace(v, true); rolls.push(v); readout.textContent = v; updateLog(); render();
+    rolls.push(v);
+    const exitA = machineWalk('A').exited, exitB = machineWalk('B').exited;
+    if (exitA || exitB) {                       // that throw would take a line off the board: undo it and stop
+      rolls.pop(); stopAuto();
+      noteEl.textContent = 'Stopped: ' + (exitA && exitB ? 'A and B' : exitA ? 'A' : 'B') + ' reached the edge.';
+      render(); return;
+    }
+    noteEl.textContent = '';
+    showFace(v, true); readout.textContent = v; updateLog(); render();
   }
   autoBtn.addEventListener('click', () => {
-    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; autoBtn.setAttribute('aria-pressed', 'false'); autoBtn.textContent = 'Auto throw'; }
+    if (autoTimer) { stopAuto(); }
     else {
+      noteEl.textContent = '';
       showMachine = true; machineBtn.setAttribute('aria-pressed', 'true');
       autoTimer = setInterval(quickThrow, 260); autoBtn.setAttribute('aria-pressed', 'true'); autoBtn.textContent = 'Stop';
     }
   });
   document.getElementById('clear').addEventListener('click', () => {
-    sides.A.strokes = []; sides.B.strokes = []; rolls = []; readout.textContent = '–'; updateLog(); render();
+    sides.A.strokes = []; sides.B.strokes = []; rolls = []; readout.textContent = '–'; noteEl.textContent = ''; updateLog(); render();
   });
   document.getElementById('undo').addEventListener('click', undo);
   let lastSide = 'A';
@@ -265,19 +280,18 @@
     const st = sides[side].strokes;
     let start = null;
     for (const k of st) if (k.type === 'snap') { start = k.pts[0]; break; }
-    if (!start) start = snap(side === 'A' ? W / 4 : 3 * W / 4, H / 2);
+    if (!start) start = START[side];
     const pts = [start]; let x = start[0], y = start[1], dir = 0;   // 0 = up
     const lo = side === 'A' ? 0 : W / 2, hi = side === 'A' ? W / 2 : W;
+    let exited = false;
     for (const v of rolls) {
-      if (side === 'A') dir = v - 1;
+      if (side === 'A') dir = v <= 2 ? 0 : v <= 4 ? 2 : 4;     // up, down-right, down-left
       else dir = (dir + (v <= 2 ? -1 : v <= 4 ? 0 : 1) + 6) % 6;
-      let nx = x + DIRS[dir][0], ny = y + DIRS[dir][1];
-      if (nx < lo || nx > hi || ny < 0 || ny > H) {          // edge: treat as straight, and if still out, stay
-        if (side === 'B') { nx = x + DIRS[dir][0]; ny = y + DIRS[dir][1]; }
-        if (nx < lo || nx > hi || ny < 0 || ny > H) { pts.push([x, y]); continue; }
-      }
+      const nx = x + DIRS[dir][0], ny = y + DIRS[dir][1];
+      if (nx < lo - 0.5 || nx > hi + 0.5 || ny < -0.5 || ny > H + 0.5) { exited = true; break; }   // would leave the board: stop here
       x = nx; y = ny; pts.push([x, y]);
     }
+    pts.exited = exited;
     return pts;
   }
 
@@ -294,6 +308,19 @@
     // frame + divider
     ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
     ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+    // start points: a ring with a dot, plus a small arrow showing B's initial heading (up)
+    for (const side of ['A', 'B']) {
+      const [sx, sy] = START[side];
+      ctx.strokeStyle = '#000'; ctx.fillStyle = '#000'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('start', sx, sy + 13);
+      if (side === 'B') {   // B's memory starts pointing up
+        ctx.beginPath(); ctx.moveTo(sx, sy - 12); ctx.lineTo(sx, sy - 28); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(sx - 4, sy - 23); ctx.lineTo(sx, sy - 28); ctx.lineTo(sx + 4, sy - 23); ctx.stroke();
+      }
+    }
     // machine overlay
     if (showMachine) {
       ctx.strokeStyle = '#39ff14'; ctx.globalAlpha = .9; ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
