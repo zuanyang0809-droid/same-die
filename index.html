@@ -18,11 +18,12 @@
   .sub b { font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
   .label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 
-  .stage { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: stretch; }
-  @media (max-width: 860px) { .stage { grid-template-columns: 1fr; } }
+  .stage { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 860px) { .stage { grid-template-columns: 1fr; } .tray { position: static; height: auto; } }
 
   /* die */
-  .tray { display: flex; flex-direction: column; align-items: center; gap: 12px; user-select: none; touch-action: none; cursor: grab; }
+  .tray { display: flex; flex-direction: column; align-items: center; gap: 12px; user-select: none; touch-action: none; cursor: grab; position: sticky; top: 16px; height: calc(100vh - 32px); }
+  /* height is refined by script so the bottom buttons are visible before any scrolling */
   .tray.grabbing { cursor: grabbing; }
   .tray .label { align-self: flex-start; }
   .scene { width: 200px; height: 200px; perspective: 700px; perspective-origin: 50% 40%; display: grid; place-items: center; }
@@ -177,6 +178,13 @@
     setTimeout(() => { rolls.push(v); readout.textContent = v; updateLog(); busy = false; if (showMachine) render(); }, 700);
   }
   function updateLog() { nEl.textContent = rolls.length; logEl.textContent = rolls.join(' '); }
+  // Size the die column so its bottom buttons sit at the viewport's bottom edge even at scroll 0.
+  function sizeTray() {
+    if (window.innerWidth <= 860) { tray.style.height = ''; return; }
+    const top = tray.getBoundingClientRect().top + window.scrollY;
+    tray.style.height = Math.max(420, window.innerHeight - top - 16) + 'px';
+  }
+  window.addEventListener('resize', sizeTray); window.addEventListener('load', sizeTray); sizeTray();
   throwBtn.addEventListener('click', throwDie);
   let down = false;
   tray.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; down = true; tray.classList.add('grabbing'); });
