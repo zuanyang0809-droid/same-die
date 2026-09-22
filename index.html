@@ -146,7 +146,7 @@
         <span class="stat">Machine distance from start · A <b id="dA">–</b> · B <b id="dB">–</b> steps</span>
       </div>
 
-      <p class="how"><b>By hand:</b> begin at the marked start point on each side, throw, then tap the next grid point on A and on B. Same pairs of faces on both sides: 1–2, 3–4, 5–6. Every tap snaps to the grid and joins your last point. <b>Auto throw:</b> the die keeps throwing and the machine draws both walkers itself, and stops on its own the moment either line would leave the board. <b>Show machine:</b> overlays in green what the code draws from the same throws, starting where your line starts, so any step where your black line leaves the green one is a mistake made visible. <b>Clear</b> wipes the drawing and the throws. To keep a drawing, take a screenshot.</p>
+      <p class="how"><b>By hand:</b> begin at the black dot on each side, throw, then tap the next grid point on A and on B. Same pairs of faces on both sides: 1–2, 3–4, 5–6. Every tap snaps to the grid and joins your last point. <b>Auto throw:</b> the die keeps throwing and the machine draws both walkers itself, and stops on its own the moment either line would leave the board. <b>Show machine:</b> overlays in green what the code draws from the same throws, starting where your line starts, so any step where your black line leaves the green one is a mistake made visible. <b>Clear</b> wipes the drawing and the throws. To keep a drawing, take a screenshot.</p>
 
     </section>
   </div>
@@ -308,18 +308,10 @@
     // frame + divider
     ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
     ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
-    // start points: a ring with a dot, plus a small arrow showing B's initial heading (up)
+    // start points
     for (const side of ['A', 'B']) {
       const [sx, sy] = START[side];
-      ctx.strokeStyle = '#000'; ctx.fillStyle = '#000'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText('start', sx, sy + 13);
-      if (side === 'B') {   // B's memory starts pointing up
-        ctx.beginPath(); ctx.moveTo(sx, sy - 12); ctx.lineTo(sx, sy - 28); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(sx - 4, sy - 23); ctx.lineTo(sx, sy - 28); ctx.lineTo(sx + 4, sy - 23); ctx.stroke();
-      }
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI * 2); ctx.fill();
     }
     // machine overlay
     if (showMachine) {
