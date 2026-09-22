@@ -18,11 +18,11 @@
   .sub b { font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
   .label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 
-  .stage { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+  .stage { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: stretch; }
   @media (max-width: 860px) { .stage { grid-template-columns: 1fr; } }
 
   /* die */
-  .tray { display: flex; flex-direction: column; align-items: center; gap: 12px; user-select: none; touch-action: none; cursor: grab; position: sticky; top: 12px; }
+  .tray { display: flex; flex-direction: column; align-items: center; gap: 12px; user-select: none; touch-action: none; cursor: grab; }
   .tray.grabbing { cursor: grabbing; }
   .tray .label { align-self: flex-start; }
   .scene { width: 200px; height: 200px; perspective: 700px; perspective-origin: 50% 40%; display: grid; place-items: center; }
@@ -62,7 +62,11 @@
   #machine { border-color: #39ff14; color: #39ff14; }
   #machine[aria-pressed="true"] { background: #39ff14; color: #000; }
   .sep { width: 1px; height: 22px; background: #000; opacity: .3; margin: 0 4px; }
-  .stat { font-size: 12px; margin-left: auto; }
+  .stat { font-size: 12px; }
+  .side-controls { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: auto; cursor: default; }
+  .side-controls .ghost { width: 100%; }
+  .pair { display: flex; gap: 8px; }
+  .pair .ghost { flex: 1; }
   .stat b { font-weight: 500; font-variant-numeric: tabular-nums; }
 
   .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 28px; padding-bottom: 14px; }
@@ -108,6 +112,13 @@
       <button class="throw" id="throw" type="button">Throw</button>
       <button class="ghost auto" id="auto" type="button" aria-pressed="false">Auto throw</button>
       <div class="rolls"><b>Throws</b> <span id="n">0</span><br><span id="log"></span></div>
+      <div class="side-controls">
+        <button class="ghost" id="machine" type="button" aria-pressed="false">Show machine</button>
+        <div class="pair">
+          <button class="ghost" id="undo" type="button">Undo</button>
+          <button class="ghost" id="clear" type="button">Clear</button>
+        </div>
+      </div>
     </section>
 
     <section class="right" aria-label="Drawing">
@@ -130,10 +141,6 @@
       </div>
 
       <div class="controls">
-        <button class="ghost" id="machine" type="button" aria-pressed="false">Show machine</button>
-        <span class="sep"></span>
-        <button class="ghost" id="undo" type="button">Undo</button>
-        <button class="ghost" id="clear" type="button">Clear</button>
         <span class="stat">Machine distance from start · A <b id="dA">–</b> · B <b id="dB">–</b> steps</span>
       </div>
 
