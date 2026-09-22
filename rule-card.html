@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Same Die Rule Card</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root { --paper: #fff; --ink: #000; --grid: #000; }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  body { background: var(--paper); color: var(--ink); font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 11px; line-height: 1.4; padding-block: 16px; padding-inline: 16px; }
+  .sheet { width: 100%; max-width: 8.5in; margin: 0 auto; background: #fff; color: #000; display: flex; flex-direction: column; gap: 10px; }
+  .toolbar { max-width: 8.5in; margin: 0 auto 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; }
+  .toolbar button { font: inherit; background: #000; color: #fff; border: 0; padding: 8px 14px; cursor: pointer; }
+  h1 { font-size: 16px; font-weight: 500; margin: 0; letter-spacing: .02em; }
+  .head { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border-bottom: 1px solid #000; padding: 3px 6px; text-align: left; vertical-align: top; }
+  th { font-weight: 500; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+  td.k { font-weight: 500; text-align: center; width: 2.2em; }
+  .steps { font-size: 10.5px; margin: 0; padding-left: 1.3em; }
+  .steps li { margin: 1px 0; }
+  .rose { width: 150px; text-align: center; font-size: 10px; }
+  .rose svg { width: 150px; height: 150px; display: block; }
+  .board { position: relative; }
+  .board svg { display: block; width: 100%; height: auto; }
+  .lab { position: absolute; top: 4px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; background: #fff; padding: 0 4px; }
+  .lab.A { left: 6px; } .lab.B { left: calc(50% + 6px); }
+  @page { size: letter; margin: 0.45in; }
+  @media print {
+    body { padding: 0; }
+    .toolbar { display: none; }
+    .sheet { max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="toolbar">
+  <span>Print this page on Letter or A4. Everything fits on one sheet.</span>
+  <button type="button" onclick="window.print()">Print</button>
+</div>
+
+<div class="sheet">
+  <div class="head">
+    <div>
+      <h1>Same Die, Two Rules · rule card</h1>
+      <table>
+        <tr><th>Roll</th><th>Rule A · absolute</th><th>Rule B · relative</th></tr>
+        <tr><td class="k">1</td><td>draw one step toward 1 (up)</td><td>turn left one grid line, draw one step</td></tr>
+        <tr><td class="k">2</td><td>draw one step toward 2</td><td>turn left one grid line, draw one step</td></tr>
+        <tr><td class="k">3</td><td>draw one step toward 3</td><td>go straight, draw one step</td></tr>
+        <tr><td class="k">4</td><td>draw one step toward 4 (down)</td><td>go straight, draw one step</td></tr>
+        <tr><td class="k">5</td><td>draw one step toward 5</td><td>turn right one grid line, draw one step</td></tr>
+        <tr><td class="k">6</td><td>draw one step toward 6</td><td>turn right one grid line, draw one step</td></tr>
+      </table>
+      <ol class="steps">
+        <li>Put a dot in the middle of side A and one in the middle of side B. B starts pointing up.</li>
+        <li>Roll once. Draw one grid step on A, then one grid step on B. Same roll for both.</li>
+        <li>Repeat 40 times. Always start where the last step ended.</li>
+        <li>A: look at the rose. B: look at your last step, then turn left, go straight, or turn right along the grid.</li>
+        <li>If a line reaches the edge, treat that roll as straight.</li>
+      </ol>
+    </div>
+    <div class="rose">
+      <svg viewBox="-60 -60 120 120" aria-label="Six directions numbered 1 to 6">
+        <g stroke="#000" stroke-width="1" fill="none">
+          <line x1="0" y1="0" x2="0" y2="-40"/><line x1="0" y1="0" x2="34.6" y2="-20"/><line x1="0" y1="0" x2="34.6" y2="20"/>
+          <line x1="0" y1="0" x2="0" y2="40"/><line x1="0" y1="0" x2="-34.6" y2="20"/><line x1="0" y1="0" x2="-34.6" y2="-20"/>
+        </g>
+        <circle cx="0" cy="0" r="2.2" fill="#000"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="500" fill="#000" text-anchor="middle" dominant-baseline="middle">
+          <text x="0" y="-50">1</text><text x="44" y="-25">2</text><text x="44" y="25">3</text>
+          <text x="0" y="51">4</text><text x="-44" y="25">5</text><text x="-44" y="-25">6</text>
+        </g>
+      </svg>
+      Rule A directions. They match the grid lines.
+    </div>
+  </div>
+
+  <div class="board">
+    <span class="lab A">A · absolute</span>
+    <span class="lab B">B · relative</span>
+    <svg id="grid" viewBox="0 0 762 700" aria-label="Triangular grid, split in two halves"></svg>
+  </div>
+</div>
+
+<script>
+(function () {
+  const svg = document.getElementById('grid');
+  const s = 20;                              // side length of each triangle
+  const h = s * Math.sqrt(3) / 2;            // spacing between vertical lines
+  const W = 44 * h, H = 700;                 // 44 columns, so the divider sits on a grid line
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  const ns = 'http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns, 'g');
+  g.setAttribute('stroke', '#000'); g.setAttribute('stroke-width', '0.45'); g.setAttribute('fill', 'none');
+  function line(x1, y1, x2, y2) {
+    const l = document.createElementNS(ns, 'line');
+    l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+    g.appendChild(l);
+  }
+  // Triangular grid with a vertical axis: lines at 90°, 30°, 150° so that walking along
+  // grid lines gives the six directions 0°, 60°, 120°, 180°, 240°, 300° (0° = up).
+  // vertical lines
+  for (let x = 0; x <= W + 0.01; x += h) line(x, 0, x, H);
+  // lines at +30° and -30° from horizontal (i.e. ±60° from vertical)
+  const dx = h, dy = s / 2;                  // direction vector for 30° lines: (cos30, sin30)*s = (h, s/2)
+  const step = s;                            // spacing along y between parallel lines
+  for (let y0 = -W * Math.tan(Math.PI / 6) - step; y0 <= H + W * Math.tan(Math.PI / 6) + step; y0 += step) {
+    // line through (0, y0) with slope +tan30
+    line(0, y0, W, y0 + W * Math.tan(Math.PI / 6));
+    // line through (0, y0) with slope -tan30
+    line(0, y0, W, y0 - W * Math.tan(Math.PI / 6));
+  }
+  svg.appendChild(g);
+  // border + divider
+  const frame = document.createElementNS(ns, 'g');
+  frame.setAttribute('stroke', '#000'); frame.setAttribute('fill', 'none');
+  const r = document.createElementNS(ns, 'rect');
+  r.setAttribute('x', 0.5); r.setAttribute('y', 0.5); r.setAttribute('width', W - 1); r.setAttribute('height', H - 1); r.setAttribute('stroke-width', '1');
+  frame.appendChild(r);
+  const d = document.createElementNS(ns, 'line');
+  d.setAttribute('x1', W / 2); d.setAttribute('y1', 0); d.setAttribute('x2', W / 2); d.setAttribute('y2', H); d.setAttribute('stroke-width', '1.5');
+  frame.appendChild(d);
+  svg.appendChild(frame);
+})();
+</script>
+
+</body>
+</html>
